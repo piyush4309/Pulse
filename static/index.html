@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse — Mac Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body class="theme-neon">
+  <!-- Background Glow Orbs -->
+  <div class="bg-glow glow-cyan"></div>
+  <div class="bg-glow glow-magenta"></div>
+  <div class="bg-glow glow-purple"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <div class="pulse-ring"></div>
+          <span class="icon-dot">◉</span>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">PULSE</div>
+          <div class="brand-sub">MAC INTELLIGENCE</div>
+        </div>
+      </div>
+
+      <div class="system-chip-card">
+        <div class="chip-icon-box">
+          <span class="chip-logo"></span>
+        </div>
+        <div class="chip-details">
+          <div class="chip-name" id="side-chip-name">Apple M1</div>
+          <div class="chip-sub" id="side-model-name">MacBook Air</div>
+        </div>
+        <div class="chip-badge" id="side-ram-badge">8 GB</div>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-category">MONITORING</div>
+        <button class="nav-item active" data-tab="tab-cockpit">
+          <span class="nav-icon">◈</span>
+          <span class="nav-label">Cockpit Overview</span>
+          <span class="live-dot-pulse"></span>
+        </button>
+        <button class="nav-item" data-tab="tab-storage">
+          <span class="nav-icon">💾</span>
+          <span class="nav-label">Full Disk Storage</span>
+          <span class="nav-tag" id="side-disk-pct">87%</span>
+        </button>
+        <button class="nav-item" data-tab="tab-cpu">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">CPU & Memory Matrix</span>
+        </button>
+        <button class="nav-item" data-tab="tab-battery">
+          <span class="nav-icon">ϟ</span>
+          <span class="nav-label">Battery & Thermals</span>
+          <span class="nav-tag tag-green" id="side-batt-pct">100%</span>
+        </button>
+        <button class="nav-item" data-tab="tab-network">
+          <span class="nav-icon">⌁</span>
+          <span class="nav-label">Network & Ports</span>
+        </button>
+        <button class="nav-item" data-tab="tab-processes">
+          <span class="nav-icon">≡</span>
+          <span class="nav-label">Process Commander</span>
+        </button>
+        <button class="nav-item" data-tab="tab-system">
+          <span class="nav-icon">⚙</span>
+          <span class="nav-label">System & Security</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-status">
+          <span class="status-indicator active" id="ws-status-dot"></span>
+          <span class="status-text" id="ws-status-text">Connected Live</span>
+        </div>
+        <div class="sidebar-uptime" id="side-uptime">Uptime: --</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Control Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <div class="page-title-group">
+            <h1 class="page-title" id="page-heading">Cockpit Overview</h1>
+            <div class="page-meta" id="header-system-meta">
+              <span class="meta-item"><span class="meta-icon"></span> <strong id="head-mac-model">MacBook Air</strong></span>
+              <span class="meta-divider">/</span>
+              <span class="meta-item" id="head-os-ver">macOS Sequoia</span>
+              <span class="meta-divider">/</span>
+              <span class="meta-item" id="head-hostname">Host</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="control-pill live-indicator">
+            <span class="live-dot"></span>
+            <span class="live-text" id="live-text">STREAMING</span>
+            <span class="live-freq" id="live-freq">1.0s</span>
+          </div>
+
+          <div class="control-group">
+            <label for="select-interval" class="ctrl-label">Rate:</label>
+            <select id="select-interval" class="pill-select">
+              <option value="1.0" selected>1s (Live)</option>
+              <option value="2.0">2s</option>
+              <option value="5.0">5s</option>
+            </select>
+          </div>
+
+          <button class="pill-btn" id="btn-pause-toggle" title="Pause or Resume Live Stream">
+            <span id="btn-pause-icon">⏸</span>
+            <span id="btn-pause-text">Pause</span>
+          </button>
+
+          <button class="pill-btn pill-btn-primary" id="btn-manual-refresh" title="Force Refresh All Data">
+            <span>↻</span>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Alert / Health Signal Notification Banner -->
+      <section class="health-banner" id="health-banner">
+        <div class="health-banner-icon" id="health-banner-icon">✓</div>
+        <div class="health-banner-content">
+          <div class="health-title" id="health-title">System Vitals Healthy</div>
+          <div class="health-desc" id="health-desc">All monitored resource thresholds, thermal pressure, and disk limits are within optimal bounds.</div>
+        </div>
+        <div class="health-banner-meta" id="health-meta">Checked: Live</div>
+      </section>
+
+      <!-- TAB 1: COCKPIT OVERVIEW -->
+      <section class="tab-pane active" id="tab-cockpit">
+        <!-- 4 Hero Vitals Cards with Radial Rings -->
+        <div class="vitals-grid">
+          <!-- CPU Vital -->
+          <div class="vital-card card-cyan">
+            <div class="vital-header">
+              <span class="vital-label">PROCESSOR</span>
+              <span class="vital-badge" id="v-cpu-cores">8 Cores</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-gauge-box">
+                <svg class="radial-ring" viewBox="0 0 100 100">
+                  <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                  <circle class="ring-fg ring-cyan" id="gauge-cpu" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="gauge-value" id="val-cpu">0%</div>
+              </div>
+              <div class="vital-stats">
+                <div class="stat-row">
+                  <span class="stat-name">Chip:</span>
+                  <span class="stat-val" id="stat-chip-type">Apple M1</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Load Avg:</span>
+                  <span class="stat-val" id="stat-cpu-load">0.0 0.0 0.0</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">P / E Cores:</span>
+                  <span class="stat-val">4 Perf · 4 Eff</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memory Vital -->
+          <div class="vital-card card-magenta">
+            <div class="vital-header">
+              <span class="vital-label">UNIFIED MEMORY</span>
+              <span class="vital-badge" id="v-ram-pressure">Normal Pressure</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-gauge-box">
+                <svg class="radial-ring" viewBox="0 0 100 100">
+                  <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                  <circle class="ring-fg ring-magenta" id="gauge-ram" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="gauge-value" id="val-ram">0%</div>
+              </div>
+              <div class="vital-stats">
+                <div class="stat-row">
+                  <span class="stat-name">Used / Total:</span>
+                  <span class="stat-val" id="stat-ram-used">0 GB / 8 GB</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Available:</span>
+                  <span class="stat-val" id="stat-ram-avail">0 GB</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Swap Used:</span>
+                  <span class="stat-val" id="stat-ram-swap">0 GB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disk Vital -->
+          <div class="vital-card card-emerald">
+            <div class="vital-header">
+              <span class="vital-label">APFS STORAGE</span>
+              <span class="vital-badge" id="v-disk-smart">APPLE SSD</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-gauge-box">
+                <svg class="radial-ring" viewBox="0 0 100 100">
+                  <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                  <circle class="ring-fg ring-emerald" id="gauge-disk" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="gauge-value" id="val-disk">0%</div>
+              </div>
+              <div class="vital-stats">
+                <div class="stat-row">
+                  <span class="stat-name">Free Space:</span>
+                  <span class="stat-val highlight-green" id="stat-disk-free">0 GB</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Used Space:</span>
+                  <span class="stat-val" id="stat-disk-used">0 GB</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Container:</span>
+                  <span class="stat-val" id="stat-disk-total">500 GB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Battery Vital -->
+          <div class="vital-card card-amber">
+            <div class="vital-header">
+              <span class="vital-label">BATTERY & POWER</span>
+              <span class="vital-badge" id="v-battery-state">AC Power</span>
+            </div>
+            <div class="vital-body">
+              <div class="vital-gauge-box">
+                <svg class="radial-ring" viewBox="0 0 100 100">
+                  <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                  <circle class="ring-fg ring-amber" id="gauge-batt" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="gauge-value" id="val-batt">100%</div>
+              </div>
+              <div class="vital-stats">
+                <div class="stat-row">
+                  <span class="stat-name">Health Cap:</span>
+                  <span class="stat-val" id="stat-batt-health">81%</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Cycle Count:</span>
+                  <span class="stat-val" id="stat-batt-cycles">859</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-name">Thermals:</span>
+                  <span class="stat-val" id="stat-batt-thermal">Nominal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-time Spark Charts Row -->
+        <div class="charts-double-row">
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Live CPU Utilization (60 Seconds)</h3>
+                <div class="card-subtitle">Real-time processor load telemetry</div>
+              </div>
+              <div class="card-tag tag-cyan" id="chart-cpu-now">0%</div>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-cpu-history"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Live Network Throughput</h3>
+                <div class="card-subtitle">Downlink (Cyan) & Uplink (Amber) rates</div>
+              </div>
+              <div class="card-tag tag-emerald" id="chart-net-now">↓ 0 KB/s · ↑ 0 KB/s</div>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-net-history"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Summary Process & Specs Row -->
+        <div class="overview-split-row">
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Top Active Processes</h3>
+                <div class="card-subtitle">Resource-heavy tasks running now</div>
+              </div>
+              <button class="btn-text-link" onclick="switchTab('tab-processes')">View All →</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>PROCESS</th>
+                    <th>PID</th>
+                    <th>CPU %</th>
+                    <th>RAM %</th>
+                    <th>USER</th>
+                  </tr>
+                </thead>
+                <tbody id="quick-proc-tbody">
+                  <tr><td colspan="5" class="loading-cell">Sampling running processes...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Hardware Identity</h3>
+                <div class="card-subtitle">Apple Silicon architecture specs</div>
+              </div>
+            </div>
+            <div class="specs-grid" id="quick-specs-grid">
+              <div class="spec-tile">
+                <div class="spec-k">Model</div>
+                <div class="spec-v" id="hw-model-val">MacBook Air</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">Processor</div>
+                <div class="spec-v" id="hw-chip-val">Apple M1</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">Cores</div>
+                <div class="spec-v" id="hw-cores-val">8 (4P + 4E)</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">Unified RAM</div>
+                <div class="spec-v" id="hw-ram-val">8 GB</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">macOS Version</div>
+                <div class="spec-v" id="hw-os-val">27.0</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">Display</div>
+                <div class="spec-v" id="hw-disp-val">1440 x 900</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">Kernel</div>
+                <div class="spec-v" id="hw-kernel-val">Darwin arm64</div>
+              </div>
+              <div class="spec-tile">
+                <div class="spec-k">System Uptime</div>
+                <div class="spec-v highlight-cyan" id="hw-uptime-val">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: FULL DISK STORAGE -->
+      <section class="tab-pane" id="tab-storage">
+        <!-- Storage Hero Header -->
+        <div class="storage-hero-card">
+          <div class="storage-hero-left">
+            <div class="hero-chip-eyebrow">APFS CONTAINER ARCHITECTURE</div>
+            <h2 class="storage-hero-title" id="disk-hero-used">430.1 GB <span class="dim">used of</span> 494.4 GB</h2>
+            <div class="storage-hero-desc">
+              Your SSD has <strong class="highlight-green" id="disk-hero-free">64.3 GB free</strong> (13% available headroom).
+              APFS pools storage across Macintosh HD (System snapshot), Data (your files & apps), VM swapfiles, and Preboot.
+            </div>
+          </div>
+          <div class="storage-hero-actions">
+            <button class="pill-btn pill-btn-primary" id="btn-scan-storage">
+              <span>↻</span>
+              <span>Deep Scan Folders</span>
+            </button>
+            <div class="scan-cached-tag" id="storage-cache-meta">Cached for fast response</div>
+          </div>
+        </div>
+
+        <!-- Visual Multi-segment Storage Bar -->
+        <div class="glass-card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">APFS Storage Allocation</h3>
+              <div class="card-subtitle">Global container capacity breakdown</div>
+            </div>
+            <div class="card-tag tag-cyan" id="apfs-container-label">APPLE SSD · Container disk3</div>
+          </div>
+
+          <div class="storage-multi-bar" id="storage-multi-bar">
+            <!-- Dynamically populated segments -->
+            <div class="bar-seg seg-data" style="width: 78%;" title="Data Volume"></div>
+            <div class="bar-seg seg-sys" style="width: 3%;" title="System Volume"></div>
+            <div class="bar-seg seg-free" style="width: 19%;" title="Free Space"></div>
+          </div>
+
+          <div class="storage-legend" id="storage-legend-container">
+            <!-- Legend items injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Interactive Storage Explorer Columns: Donut Chart + Categories -->
+        <div class="charts-double-row">
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Storage Breakdown by Category</h3>
+                <div class="card-subtitle">Where disk space is allocated</div>
+              </div>
+            </div>
+            <div class="chart-canvas-wrapper-donut">
+              <canvas id="chart-storage-categories"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Category Space Breakdown</h3>
+                <div class="card-subtitle">Detailed itemization & volume roles</div>
+              </div>
+            </div>
+            <div class="category-list" id="category-list-container">
+              <div class="loading-cell">Measuring directory categories...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APFS Volumes Table -->
+        <div class="glass-card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">APFS Volumes in Container</h3>
+              <div class="card-subtitle">Individual mount points sharing this physical drive</div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>VOLUME NAME</th>
+                  <th>ROLE</th>
+                  <th>MOUNT POINT</th>
+                  <th>USED SPACE</th>
+                  <th>AVAILABLE SPACE</th>
+                  <th>ALLOCATION %</th>
+                </tr>
+              </thead>
+              <tbody id="apfs-volumes-tbody">
+                <tr><td colspan="6" class="loading-cell">Loading volume tables...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cleanable Space Advisor & Cache Detector -->
+        <div class="glass-card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Cleanable Caches & Reclaimable Space</h3>
+              <div class="card-subtitle">Safe-to-clean developer artifacts, caches, and trash</div>
+            </div>
+            <div class="card-tag tag-emerald" id="cleanable-total-badge">Scanning...</div>
+          </div>
+          <div class="cleanable-grid" id="cleanable-grid-container">
+            <div class="loading-cell">Scanning cleanable developer and system caches...</div>
+          </div>
+        </div>
+
+        <!-- Large Files Hunter (>100MB) -->
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Large Files Hunter (> 100 MB)</h3>
+              <div class="card-subtitle">Biggest space-eaters found in Downloads, Documents & Media</div>
+            </div>
+            <div class="filter-group">
+              <select id="select-large-filter" class="pill-select">
+                <option value="100" selected>> 100 MB</option>
+                <option value="250">> 250 MB</option>
+                <option value="500">> 500 MB</option>
+                <option value="1000">> 1 GB</option>
+              </select>
+              <button class="pill-btn pill-btn-primary" id="btn-refresh-large-files">Find Files</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>FILE NAME</th>
+                  <th>CATEGORY</th>
+                  <th>SIZE</th>
+                  <th>LOCATION</th>
+                  <th>MODIFIED</th>
+                </tr>
+              </thead>
+              <tbody id="large-files-tbody">
+                <tr><td colspan="5" class="loading-cell">Click "Find Files" to scan for large items...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: CPU & MEMORY MATRIX -->
+      <section class="tab-pane" id="tab-cpu">
+        <!-- CPU Per-Core Matrix -->
+        <div class="glass-card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Apple M1 Core Matrix</h3>
+              <div class="card-subtitle">Dynamic per-core telemetry: 4 Performance Cores (Cyan) & 4 Efficiency Cores (Magenta)</div>
+            </div>
+            <div class="card-tag tag-cyan" id="cpu-total-matrix-badge">0% Total Load</div>
+          </div>
+
+          <div class="cores-matrix-grid" id="cores-grid">
+            <!-- 8 core vertical dynamic meters generated via JS -->
+          </div>
+        </div>
+
+        <!-- Memory Deep-Dive Cards -->
+        <div class="charts-double-row">
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">RAM Composition</h3>
+                <div class="card-subtitle">Active, Wired, Inactive, and Free distribution</div>
+              </div>
+              <div class="card-tag tag-magenta" id="ram-donut-pct">0% Used</div>
+            </div>
+            <div class="chart-canvas-wrapper-donut">
+              <canvas id="chart-ram-composition"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Memory Allocation Details</h3>
+                <div class="card-subtitle">macOS Mach Virtual Memory breakdown</div>
+              </div>
+            </div>
+            <div class="mem-breakdown-list">
+              <div class="mem-row">
+                <div class="mem-info">
+                  <span class="mem-dot dot-cyan"></span>
+                  <span class="mem-label">Active Memory</span>
+                  <span class="mem-hint">(Applications in current use)</span>
+                </div>
+                <div class="mem-val" id="mem-val-active">-- GB</div>
+              </div>
+
+              <div class="mem-row">
+                <div class="mem-info">
+                  <span class="mem-dot dot-magenta"></span>
+                  <span class="mem-label">Wired Memory</span>
+                  <span class="mem-hint">(Kernel & system critical, cannot page out)</span>
+                </div>
+                <div class="mem-val" id="mem-val-wired">-- GB</div>
+              </div>
+
+              <div class="mem-row">
+                <div class="mem-info">
+                  <span class="mem-dot dot-amber"></span>
+                  <span class="mem-label">Inactive Memory</span>
+                  <span class="mem-hint">(Recently closed apps, instantly reclaimable)</span>
+                </div>
+                <div class="mem-val" id="mem-val-inactive">-- GB</div>
+              </div>
+
+              <div class="mem-row">
+                <div class="mem-info">
+                  <span class="mem-dot dot-green"></span>
+                  <span class="mem-label">Free & Available</span>
+                  <span class="mem-hint">(Immediate memory reserve)</span>
+                </div>
+                <div class="mem-val highlight-green" id="mem-val-free">-- GB</div>
+              </div>
+
+              <div class="mem-row">
+                <div class="mem-info">
+                  <span class="mem-dot dot-purple"></span>
+                  <span class="mem-label">Swap File Storage</span>
+                  <span class="mem-hint">(APFS SSD swap allocation)</span>
+                </div>
+                <div class="mem-val" id="mem-val-swap">-- GB</div>
+              </div>
+
+              <div class="mem-row">
+                <div class="mem-info">
+                  <span class="mem-dot dot-emerald"></span>
+                  <span class="mem-label">Memory Pressure Level</span>
+                </div>
+                <div class="mem-val" id="mem-val-pressure">Normal</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Disk I/O Speeds -->
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Live Disk I/O Throughput</h3>
+              <div class="card-subtitle">Real-time Read & Write MB/s over 60 seconds</div>
+            </div>
+            <div class="card-tag tag-cyan" id="disk-io-rate-tag">R: 0 MB/s · W: 0 MB/s</div>
+          </div>
+          <div class="chart-canvas-wrapper">
+            <canvas id="chart-disk-io-history"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: BATTERY & POWER -->
+      <section class="tab-pane" id="tab-battery">
+        <div class="power-cards-grid">
+          <div class="glass-card power-stat-card">
+            <div class="power-icon-box">ϟ</div>
+            <div class="power-stat-title">CURRENT CHARGE</div>
+            <div class="power-stat-num highlight-green" id="pwr-charge-pct">100%</div>
+            <div class="power-stat-sub" id="pwr-charge-state">AC Power Connected · Full</div>
+          </div>
+
+          <div class="glass-card power-stat-card">
+            <div class="power-icon-box">♥</div>
+            <div class="power-stat-title">MAXIMUM CAPACITY</div>
+            <div class="power-stat-num highlight-cyan" id="pwr-max-cap">81%</div>
+            <div class="power-stat-sub">Normal health condition</div>
+          </div>
+
+          <div class="glass-card power-stat-card">
+            <div class="power-icon-box">↻</div>
+            <div class="power-stat-title">BATTERY CYCLE COUNT</div>
+            <div class="power-stat-num highlight-amber" id="pwr-cycles">859</div>
+            <div class="power-stat-sub">Of 1,000 Apple rated cycles (86% consumed)</div>
+          </div>
+
+          <div class="glass-card power-stat-card">
+            <div class="power-icon-box">❄</div>
+            <div class="power-stat-title">THERMAL PRESSURE</div>
+            <div class="power-stat-num highlight-green" id="pwr-thermal">Nominal</div>
+            <div class="power-stat-sub">No throttling detected</div>
+          </div>
+        </div>
+
+        <div class="charts-double-row mt-4">
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Battery Cycle Wear Gauge</h3>
+                <div class="card-subtitle">Apple MacBook Air rating: 1,000 cycles before service</div>
+              </div>
+            </div>
+            <div class="battery-wear-container">
+              <div class="wear-bar-track">
+                <div class="wear-bar-fill" id="wear-bar-fill" style="width: 86%;"></div>
+              </div>
+              <div class="wear-meta-row">
+                <span>0 Cycles</span>
+                <span class="highlight-amber">859 Current Cycles</span>
+                <span>1,000 Cycle Max</span>
+              </div>
+              <div class="wear-note">
+                Your battery condition is verified as <strong>Normal</strong> with 81% maximum health remaining.
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Power Assertions & Sleep Blockers</h3>
+                <div class="card-subtitle">Daemons or apps preventing display or system sleep</div>
+              </div>
+            </div>
+            <div class="sleep-blockers-list" id="sleep-blockers-list">
+              <div class="clean-check-item">
+                <span class="check-icon">✓</span>
+                <span>No active sleep inhibitors preventing standby mode.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: NETWORK & PORTS -->
+      <section class="tab-pane" id="tab-network">
+        <div class="net-stats-grid mb-4">
+          <div class="glass-card net-card">
+            <div class="net-card-label">DOWNLOAD SPEED</div>
+            <div class="net-card-val highlight-cyan" id="net-down-speed">0.0 KB/s</div>
+            <div class="net-card-sub" id="net-total-recv">Cumulative: 0.0 GB</div>
+          </div>
+
+          <div class="glass-card net-card">
+            <div class="net-card-label">UPLOAD SPEED</div>
+            <div class="net-card-val highlight-amber" id="net-up-speed">0.0 KB/s</div>
+            <div class="net-card-sub" id="net-total-sent">Cumulative: 0.0 GB</div>
+          </div>
+
+          <div class="glass-card net-card">
+            <div class="net-card-label">HOSTNAME & DOMAIN</div>
+            <div class="net-card-val" id="net-hostname-card">Host</div>
+            <div class="net-card-sub">Local macOS Network Node</div>
+          </div>
+        </div>
+
+        <!-- Network Interfaces Table -->
+        <div class="glass-card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Active Network Interfaces</h3>
+              <div class="card-subtitle">Configured network adapters & IP addresses</div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>INTERFACE</th>
+                  <th>STATUS</th>
+                  <th>ASSIGNED IP ADDRESSES</th>
+                  <th>MAC HARDWARE ADDRESS</th>
+                </tr>
+              </thead>
+              <tbody id="interfaces-tbody">
+                <tr><td colspan="4" class="loading-cell">Inspecting active interfaces...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Open Listening TCP Ports -->
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Open Listening TCP Ports</h3>
+              <div class="card-subtitle">Active local servers, daemons, and developer services</div>
+            </div>
+            <div class="card-tag tag-cyan" id="ports-count-tag">0 Ports</div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>PORT</th>
+                  <th>PROCESS NAME</th>
+                  <th>PID</th>
+                  <th>USER</th>
+                  <th>BIND ADDRESS</th>
+                </tr>
+              </thead>
+              <tbody id="ports-tbody">
+                <tr><td colspan="5" class="loading-cell">Inspecting open sockets...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: PROCESS COMMANDER -->
+      <section class="tab-pane" id="tab-processes">
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Process Commander</h3>
+              <div class="card-subtitle">Search, filter, inspect, and terminate running tasks</div>
+            </div>
+            <div class="proc-controls">
+              <input type="text" id="proc-search-input" class="search-input" placeholder="Filter by name or PID...">
+              <select id="proc-sort-select" class="pill-select">
+                <option value="cpu" selected>Sort by CPU %</option>
+                <option value="ram">Sort by RAM (MB)</option>
+                <option value="name">Sort by Name</option>
+                <option value="pid">Sort by PID</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>PID</th>
+                  <th>COMMAND</th>
+                  <th>CPU %</th>
+                  <th>RAM %</th>
+                  <th>MEMORY (RSS)</th>
+                  <th>THREADS</th>
+                  <th>USER</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="process-full-tbody">
+                <tr><td colspan="8" class="loading-cell">Loading process table...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 7: SYSTEM & SECURITY -->
+      <section class="tab-pane" id="tab-system">
+        <!-- Security Posture -->
+        <div class="security-grid mb-4">
+          <div class="glass-card sec-card">
+            <div class="sec-card-header">
+              <span class="sec-icon">🔒</span>
+              <span class="sec-title">FileVault Encryption</span>
+            </div>
+            <div class="sec-status" id="sec-fv-status">Enabled</div>
+            <div class="sec-desc">Hardware-accelerated disk encryption on APFS Data volume.</div>
+          </div>
+
+          <div class="glass-card sec-card">
+            <div class="sec-card-header">
+              <span class="sec-icon">🛡️</span>
+              <span class="sec-title">System Integrity Protection</span>
+            </div>
+            <div class="sec-status" id="sec-sip-status">Enabled</div>
+            <div class="sec-desc">Rootless protection preventing unauthorized system file modifications.</div>
+          </div>
+
+          <div class="glass-card sec-card">
+            <div class="sec-card-header">
+              <span class="sec-icon">🧱</span>
+              <span class="sec-title">Application Firewall</span>
+            </div>
+            <div class="sec-status" id="sec-fw-status">Disabled</div>
+            <div class="sec-desc">Controls incoming network connection requests.</div>
+          </div>
+        </div>
+
+        <!-- Developer Toolchain Grid -->
+        <div class="glass-card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Developer Toolchains & Runtimes</h3>
+              <div class="card-subtitle">Detected language runtimes, build tools, and package managers</div>
+            </div>
+          </div>
+          <div class="toolchain-grid" id="toolchain-grid">
+            <div class="loading-cell">Inspecting developer toolchains...</div>
+          </div>
+        </div>
+
+        <!-- Detailed System Profiler Hardware Summary -->
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">macOS Hardware & Firmware Specification</h3>
+              <div class="card-subtitle">Low-level Apple device identifiers & bootloader versions</div>
+            </div>
+          </div>
+          <div class="specs-grid" id="system-details-grid">
+            <div class="loading-cell">Reading system profile...</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
